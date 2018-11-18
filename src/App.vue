@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <Product :product="this.products[0]"></Product>
+    <Product v-for="product in products" :key="product.productId" :product="product"></Product>
   </div>
 </template>
 

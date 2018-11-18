@@ -1,7 +1,7 @@
 <template>
   <div class="product">
     <div class="product_photo">
-      <img :src="product.primaryImageUrl" alt="Изображение товара">
+      <img :src="product.primaryImageUrl.slice(0, -4) + '_220x220_1' + product.primaryImageUrl.slice(-4)" alt="Изображение товара">
     </div>
     <div class="product_info">
       <div class="product_meta">
@@ -24,7 +24,7 @@
         <div class="price__gold">
           По карте клуба:
           <span class="price__big">
-            {{product.priceGoldAlt | roundPrice}}
+            {{altPrice ? product.priceGold : product.priceGoldAlt | roundPrice}}
             <svg
               version="1.0"
               id="rouble__b"
@@ -43,7 +43,7 @@
         </div>
         <div class="price__retail">
           <span class="price__big">
-            {{product.priceRetailAlt | roundPrice}}
+            {{altPrice ? product.priceRetail: product.priceRetailAlt | roundPrice}}
             <svg
               version="1.0"
               id="rouble__g"
@@ -62,18 +62,31 @@
         </div>
         <div class="price__points">Можно купить за {{"333,33"}} балла</div>
         <div class="price_format">
-          <div class="format-option active">За м. кв.</div>
-          <div class="format-option">За упаковку</div>
+          <div @click="altPrice=false" :class="{'active': !altPrice}" class="format-option">За м. кв.</div>
+          <div @click="altPrice=true" :class="{'active': altPrice}" class="format-option">За упаковку</div>
         </div>
       </div>
       <div class="purchase_options">
         <div class="purchase_tooltip">
           <div>Продается упаковками:
-            <br>1 упак. = 2.47 м. кв.
+            <br>1 упак. = {{product.priceRetail / product.priceRetailAlt | roundPrice}} м. кв.
           </div>
         </div>
-        <div class="counter"></div>
-        <div class="purchase_button"></div>
+        <div class="counter">
+          <input @input="checkNumeric($event.target.value)" :value="count" type="text" class="counter_input">
+          <div class="counter_buttons">
+            <div @click="incCounter" class="counter_button_inc"></div>
+            <div @click="decCounter" class="counter_button_dec"></div>
+          </div>
+        </div>
+        <div :data-product-id="product.code" class="purchase_button">
+          <span class="purchase_button_text">
+            <svg class="ic ic_cart">
+              <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#cart"></use>
+            </svg>
+            <span >В корзину</span>
+          </span>
+        </div>
       </div>
     </div>
     <svg viewBox="0 0 497 415" xmlns="http://www.w3.org/2000/svg" display="none">
@@ -115,6 +128,27 @@ export default {
     roundPrice(price) {
       return Number(price.toFixed(2));
     }
+  },
+  data() {
+    return {
+      count: 1,
+      altPrice: false
+    }
+  },
+  methods: {
+    incCounter() {
+      this.count++
+    },
+    decCounter() {
+      if (this.count > 0) this.count--;
+    },
+    checkNumeric(value) {
+      if (Number.isNaN(Number.parseInt(value))) {
+        this.count = 0
+      } else {
+        this.count = Number.parseInt(value)
+      };
+    }
   }
 };
 </script>
@@ -123,7 +157,6 @@ export default {
 .product {
   box-sizing: border-box;
   padding: 10px 10px 18px;
-  height: 240px;
   border: 1px solid #a7a7a7;
   display: inline-block;
 
@@ -135,11 +168,13 @@ export default {
   }
 
   &_photo {
+    margin-left: auto;
+    margin-right: auto;
     width: 160px;
     height: 160px;
     overflow: hidden;
     img {
-      width: 100%;
+      height: 100%;
     }
   }
 
@@ -192,6 +227,7 @@ export default {
 
   &_purchase {
     width: 240px;
+    float: right;
     .price {
       text-align: right;
       &__retail {
@@ -250,6 +286,7 @@ export default {
             padding: 3px 5px;
             border: 1px solid #ccc;
             position: relative;
+            margin-bottom: 14px;
             &::before,
             &::after {
               content: "";
@@ -267,6 +304,77 @@ export default {
               border-top: 8px solid white;
             }
           }
+        }
+      }
+    }
+    .counter {
+      float: left;
+      &_input {
+        float: left;
+        width: 46px;
+        height: 38px;
+        text-align: center;
+        font-size: 16px;
+        box-sizing: border-box;
+        padding: 4px;
+        border: 1px solid #a7a7a7;
+      }
+      &_buttons {
+        float: left;
+        width: 19px;
+        height: 34px;
+        .counter_button {
+          &_inc,
+          &_dec {
+            height: 17px;
+            cursor: pointer;
+            border: 1px solid #a7a7a7;
+            border-left: 0px;
+            background-position-x: 23px;
+            background-image: url("../assets/img/count.png");
+            &:hover {
+              background-color: #a7a7a7;
+              background-position-x: -4px;
+            }
+          }
+          &_inc {
+            height: 18px;
+            background-position-y: -2px;
+            border-bottom: 0px;
+          }
+          &_dec {
+            background-position-y: -22px;
+          }
+        }
+      }
+    }
+
+    .purchase {
+      &_button {
+        height: 38px;
+        float: left;
+        margin-left: 5px;
+        background-color: #f90;
+        width: calc(100% - 72px);
+        position: relative;
+        cursor: pointer;
+        svg {
+          overflow: hidden;
+          width: 20px;
+          height: 20px;
+          position: absolute;
+          left: 20px;
+          top: 8px;
+          fill: #FFF;
+        }
+        &_text {
+          line-height: 38px;
+          margin-left: 20px;
+          color: white;
+          text-transform: uppercase;
+        }
+        &:hover {
+          background-color: black;
         }
       }
     }
